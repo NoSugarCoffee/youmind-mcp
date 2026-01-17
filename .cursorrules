@@ -1,0 +1,90 @@
+# Error Handling Policy
+
+## Core Principle: Only Handle Errors Once
+
+Errors should be handled exactly once. Handling an error means inspecting the error value and making a decision about what to do with it.
+
+### Rules:
+
+1. **Handle errors at the appropriate layer**
+   - Lower-level code (API clients, utilities) should let exceptions propagate naturally
+   - Higher-level code (handlers, endpoints) should catch, log, and convert to user-friendly messages
+   - Do NOT catch, log, and re-raise the same error at multiple layers
+
+2. **Add context when wrapping errors**
+   - When catching and re-raising, use exception chaining: `raise NewException("context") from original_error`
+   - Or use `raise` without arguments to preserve the traceback: `raise`
+   - Add meaningful context that helps debug the issue
+
+3. **Don't ignore errors**
+   - Never use bare `except:` clauses
+   - Never catch exceptions without handling them
+   - If you catch an exception, you must either:
+     - Handle it completely (log, convert to user message, return default value)
+     - Re-raise it with additional context
+     - Let it propagate if you can't add value
+
+4. **Logging and error handling**
+   - Log errors at the point where you handle them (not where you catch and re-raise)
+   - Include relevant context in log messages (request IDs, parameters, etc.)
+   - Use appropriate log levels: ERROR for failures, WARNING for recoverable issues
+
+5. **Exception types**
+   - Use specific exception types when possible (ValueError, TypeError, etc.)
+   - Create custom exceptions for domain-specific errors
+   - Avoid catching generic `Exception` unless at the top-level boundary
+
+### Anti-patterns to avoid:
+
+```python
+# BAD: Handling error twice (logging and re-raising)
+def api_call():
+    try:
+        response = client.get()
+    except Exception as e:
+        logger.error(f"Error: {e}")  # First handling
+        raise  # Re-raising, will be handled again upstream
+
+def handler():
+    try:
+        api_call()
+    except Exception as e:
+        logger.error(f"Error: {e}")  # Second handling - duplicate!
+        return "Error occurred"
+```
+
+```python
+# GOOD: Handle error once at the boundary
+def api_call():
+    # Let exceptions propagate naturally
+    return client.get()
+
+def handler():
+    try:
+        response = api_call()
+        return process(response)
+    except HTTPError as e:
+        logger.error(f"HTTP error: {e}")
+        return f"Request failed: {e.status_code}"
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        return "An error occurred"
+```
+
+### When to add context:
+
+```python
+# GOOD: Add context when re-raising
+def process_file(filename):
+    try:
+        with open(filename) as f:
+            return f.read()
+    except FileNotFoundError:
+        raise ValueError(f"Configuration file not found: {filename}") from None
+    except PermissionError as e:
+        raise PermissionError(f"Cannot read {filename}") from e
+```
+
+### Reference:
+Based on principles from: https://dave.cheney.net/2016/04/27/dont-just-check-errors-handle-them-gracefully
+
