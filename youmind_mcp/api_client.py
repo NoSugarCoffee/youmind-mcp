@@ -2,7 +2,7 @@ import os
 import httpx
 from typing import Dict, Any
 from dotenv import load_dotenv
-from exceptions import CraftNotFoundError, CraftAccessError
+from .exceptions import CraftNotFoundError, CraftAccessError
 
 load_dotenv()
 

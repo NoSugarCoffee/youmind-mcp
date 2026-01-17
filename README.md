@@ -15,28 +15,50 @@ A Model Context Protocol (MCP) server built with FastMCP that provides access to
 
 ## Installation
 
+### From PyPI (Recommended)
+
+```bash
+pip install youmind-mcp
+```
+
+### From Source
+
 1. Clone this repository:
 ```bash
 git clone <repository-url>
 cd youmind-mcp
 ```
 
-2. Install dependencies:
+2. Install the package:
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
-3. Set up environment variables:
+Or install in development mode:
+```bash
+pip install -e .
+```
+
+### Configuration
+
+Set up environment variables. You can either:
+
+1. Create a `.env` file:
 ```bash
 cp .env.example .env
 ```
 
-4. Edit `.env` and add your YouMind authentication token:
+2. Edit `.env` and add your YouMind authentication token:
 ```
 YOUMIND_AUTH_TOKEN=sb-flzdupptcpbcowdaetfq-auth-token=your-actual-token-here
 ```
 
-To get your authentication token:
+Or set the environment variable directly:
+```bash
+export YOUMIND_AUTH_TOKEN=sb-flzdupptcpbcowdaetfq-auth-token=your-actual-token-here
+```
+
+**To get your authentication token:**
 1. Log in to YouMind in your browser
 2. Open browser developer tools (F12)
 3. Go to Application/Storage > Cookies > https://youmind.com
@@ -47,9 +69,15 @@ To get your authentication token:
 
 ### Running the Server
 
-Run the MCP server:
+After installation, you can run the MCP server using:
+
 ```bash
-python server.py
+youmind-mcp
+```
+
+Or as a Python module:
+```bash
+python -m youmind_mcp
 ```
 
 The server will start and communicate via stdio (standard input/output), which is the standard transport for MCP servers.
@@ -58,12 +86,27 @@ The server will start and communicate via stdio (standard input/output), which i
 
 Configure your MCP client (e.g., Claude Desktop, Cursor) to use this server:
 
+**After pip installation:**
+```json
+{
+  "mcpServers": {
+    "youmind": {
+      "command": "youmind-mcp",
+      "env": {
+        "YOUMIND_AUTH_TOKEN": "sb-flzdupptcpbcowdaetfq-auth-token=your-token"
+      }
+    }
+  }
+}
+```
+
+**Or using Python module:**
 ```json
 {
   "mcpServers": {
     "youmind": {
       "command": "python",
-      "args": ["/path/to/youmind-mcp/server.py"],
+      "args": ["-m", "youmind_mcp"],
       "env": {
         "YOUMIND_AUTH_TOKEN": "sb-flzdupptcpbcowdaetfq-auth-token=your-token"
       }
@@ -94,11 +137,18 @@ get_craft_content(craft_id="019bc6bc-e1cc-79a2-a6fd-448b711a8895")
 
 ```
 youmind-mcp/
-├── server.py          # Main FastMCP server implementation
-├── api_client.py      # YouMind API client
-├── requirements.txt   # Python dependencies
-├── README.md         # This file
-└── .env.example      # Environment variable template
+├── youmind_mcp/          # Package directory
+│   ├── __init__.py       # Package initialization
+│   ├── __main__.py       # Module entry point
+│   ├── server.py         # Main FastMCP server implementation
+│   ├── api_client.py     # YouMind API client
+│   └── exceptions.py     # Custom exceptions
+├── pyproject.toml        # Package configuration
+├── MANIFEST.in           # Distribution manifest
+├── requirements.txt      # Python dependencies (for reference)
+├── README.md             # This file
+├── LICENSE               # MIT License
+└── .env.example          # Environment variable template
 ```
 
 ## Error Handling
@@ -115,16 +165,51 @@ All errors are returned as user-friendly messages.
 
 ## Development
 
+### Setup
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd youmind-mcp
+```
+
+2. Install in development mode with optional dependencies:
+```bash
+pip install -e ".[dev]"
+```
+
 ### Testing
 
 You can test the API client directly:
 
 ```python
-from api_client import YouMindAPIClient
+from youmind_mcp.api_client import YouMindAPIClient
 
 client = YouMindAPIClient()
 response = client.get_craft("craft-id-here")
 print(response)
+```
+
+### Building for Distribution
+
+To build the package:
+
+```bash
+python -m build
+```
+
+This will create distribution files in the `dist/` directory.
+
+### Publishing to PyPI
+
+1. Build the package:
+```bash
+python -m build
+```
+
+2. Upload to PyPI (requires credentials):
+```bash
+python -m twine upload dist/*
 ```
 
 ## Support

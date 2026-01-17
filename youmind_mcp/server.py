@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
-from api_client import YouMindAPIClient
-from exceptions import CraftNotFoundError, CraftAccessError, CraftContentError
+from .api_client import YouMindAPIClient
+from .exceptions import CraftNotFoundError, CraftAccessError, CraftContentError
 import logging
 import sys
 
@@ -52,6 +52,11 @@ def get_craft_content(craft_id: str) -> str:
         raise CraftContentError(f"Craft {craft_id} found but content structure is unexpected. Available keys: {available_keys}")
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the MCP server."""
     mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()
 
